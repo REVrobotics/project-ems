@@ -182,24 +182,12 @@ export class MatchTimer extends EventEmitter {
     return this._timeLeft;
   }
 
-  set timeLeft(value: number) {
-    this._timeLeft = value;
-  }
-
   get modeTimeLeft(): number {
     return this._modeTimeLeft;
   }
 
-  set modeTimeLeft(value: number) {
-    this._modeTimeLeft = value;
-  }
-
   get mode(): MatchMode {
     return this._mode;
-  }
-
-  set mode(value: MatchMode) {
-    this._mode = value;
   }
 }
 
