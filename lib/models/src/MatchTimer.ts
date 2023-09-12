@@ -53,7 +53,7 @@ export class MatchTimer extends EventEmitter {
     this._modeTimeLeft = this._matchConfig.delayTime;
   }
 
-  public start() {
+  public start(): undefined {
     if (!this.inProgress()) {
       let matchPhaseEvent: string;
       if (this.matchConfig.delayTime > 0) {
@@ -82,7 +82,7 @@ export class MatchTimer extends EventEmitter {
     }
   }
 
-  public stop() {
+  public stop(): undefined {
     if (this.inProgress()) {
       clearInterval(this._timerID);
       this._timerID = null;
@@ -92,7 +92,7 @@ export class MatchTimer extends EventEmitter {
     }
   }
 
-  public abort() {
+  public abort(): undefined {
     if (this.inProgress()) {
       clearInterval(this._timerID);
       this._timerID = null;
@@ -102,7 +102,7 @@ export class MatchTimer extends EventEmitter {
     }
   }
 
-  public reset() {
+  public reset(): undefined {
     if (!this.inProgress()) {
       this._mode = MatchMode.RESET;
       this._timerID = null;
@@ -111,11 +111,11 @@ export class MatchTimer extends EventEmitter {
     }
   }
 
-  public inProgress() {
+  public inProgress(): boolean {
     return this._timerID !== null;
   }
 
-  public removeListeners(): void {
+  public removeListeners(): undefined {
     this.removeAllListeners('timer:start');
     this.removeAllListeners('timer:auto');
     this.removeAllListeners('timer:tele');
@@ -124,7 +124,7 @@ export class MatchTimer extends EventEmitter {
     this.removeAllListeners('timer:abort');
   }
 
-  private tick() {
+  private tick(): undefined {
     if (this._timeLeft === 0) {
       this.stop();
       return;
