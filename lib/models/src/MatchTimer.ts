@@ -36,6 +36,7 @@ export enum MatchMode {
 }
 
 export class MatchTimer extends EventEmitter {
+  private startTimeMonotonicMs: number;
   private _mode: MatchMode;
   private _timerID: any;
 
@@ -48,6 +49,7 @@ export class MatchTimer extends EventEmitter {
   constructor() {
     super();
 
+    this.startTimeMonotonicMs = 0;
     this._mode = MatchMode.RESET;
     this._timerID = null;
     this.matchConfig = FRC_MATCH_CONFIG;
@@ -55,6 +57,7 @@ export class MatchTimer extends EventEmitter {
 
   public start(): undefined {
     if (!this.inProgress()) {
+      this.startTimeMonotonicMs = performance.now();
       let matchPhaseEvent: MatchTimer.Events;
       if (this.matchConfig.delayTime > 0) {
         this._mode = MatchMode.PRESTART;
@@ -76,9 +79,7 @@ export class MatchTimer extends EventEmitter {
       this._secondsLeftInMatch = this._matchLengthSeconds;
       this.emit(MatchTimer.Events.START, this._secondsLeftInMatch);
       this.emit(matchPhaseEvent);
-      this._timerID = setInterval(() => {
-        this.tick();
-      }, 1000);
+      this._timerID = setInterval(() => this.checkStatus(), 50);
     }
   }
 
@@ -113,6 +114,14 @@ export class MatchTimer extends EventEmitter {
 
   public inProgress(): boolean {
     return this._timerID !== null;
+  }
+
+  private checkStatus(): undefined {
+    const msSinceStart = performance.now() - this.startTimeMonotonicMs;
+    const wholeSecondsSinceStart = Math.floor(msSinceStart * 0.001);
+    if (this._matchLengthSeconds - wholeSecondsSinceStart < this._secondsLeftInMatch) {
+      this.tick();
+    }
   }
 
   private tick(): undefined {
