@@ -101,13 +101,13 @@ export default class Match extends Room {
       });
       this.timer.once("timer:end", () => {
         this.emitToAll("match:end");
-        this.timer.removeListeners();
+        this.timer.removeAllListeners();
         this.state = MatchState.MATCH_COMPLETE;
         logger.info("match completed");
       });
       this.timer.once("timer:abort", () => {
         this.emitToAll("match:abort");
-        this.timer.removeListeners();
+        this.timer.removeAllListeners();
         this.state = MatchState.PRESTART_READY;
         logger.info("match aborted");
       });

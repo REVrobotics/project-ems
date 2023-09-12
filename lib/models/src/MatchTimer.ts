@@ -115,15 +115,6 @@ export class MatchTimer extends EventEmitter {
     return this._timerID !== null;
   }
 
-  public removeListeners(): undefined {
-    this.removeAllListeners('timer:start');
-    this.removeAllListeners('timer:auto');
-    this.removeAllListeners('timer:tele');
-    this.removeAllListeners('timer:endgame');
-    this.removeAllListeners('timer:end');
-    this.removeAllListeners('timer:abort');
-  }
-
   private tick(): undefined {
     if (this._timeLeft === 0) {
       this.stop();
