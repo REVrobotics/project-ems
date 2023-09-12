@@ -76,8 +76,8 @@ export class MatchTimer extends EventEmitter {
         this._secondsLeftInMode = this.matchConfig.teleTime;
         matchPhaseEvent = MatchTimer.Events.TELEOPERATED;
       }
-      this._secondsLeftInMatch = this._matchLengthSeconds;
-      this.emit(MatchTimer.Events.START, this._secondsLeftInMatch);
+      this._secondsLeftInMatch = this.matchLength;
+      this.emit(MatchTimer.Events.START, this.secondsLeftInMatch);
       this.emit(matchPhaseEvent);
       this.timerID = setInterval(() => this.checkStatus(), 50);
     }
@@ -107,8 +107,8 @@ export class MatchTimer extends EventEmitter {
     if (!this.inProgress()) {
       this._mode = MatchMode.RESET;
       this.timerID = null;
-      this._secondsLeftInMatch = this._matchLengthSeconds;
-      this._secondsLeftInMode = this._matchConfig.delayTime;
+      this._secondsLeftInMatch = this.matchLength;
+      this._secondsLeftInMode = this.matchConfig.delayTime;
     }
   }
 
@@ -119,13 +119,13 @@ export class MatchTimer extends EventEmitter {
   private checkStatus(): undefined {
     const msSinceStart = performance.now() - this.startTimeMonotonicMs;
     const wholeSecondsSinceStart = Math.floor(msSinceStart * 0.001);
-    if (this._matchLengthSeconds - wholeSecondsSinceStart < this._secondsLeftInMatch) {
+    if (this.matchLength - wholeSecondsSinceStart < this.secondsLeftInMatch) {
       this.tick();
     }
   }
 
   private tick(): undefined {
-    if (this._secondsLeftInMatch === 0) {
+    if (this.secondsLeftInMatch === 0) {
       this.stop();
       return;
     }
@@ -133,8 +133,8 @@ export class MatchTimer extends EventEmitter {
     this._secondsLeftInMode--;
     this._secondsLeftInMatch--;
 
-    if (this._secondsLeftInMode === 0) {
-      switch (this._mode) {
+    if (this.secondsLeftInMode === 0) {
+      switch (this.mode) {
         case MatchMode.PRESTART:
           if (this.matchConfig.autoTime > 0) {
             this._mode = MatchMode.AUTONOMOUS;
@@ -171,7 +171,7 @@ export class MatchTimer extends EventEmitter {
     } else {
       if (
         this.matchConfig.endTime > 0 &&
-        this._secondsLeftInMatch === this.matchConfig.endTime
+        this.secondsLeftInMatch === this.matchConfig.endTime
       ) {
         this._mode = MatchMode.ENDGAME;
         this.emit(MatchTimer.Events.ENDGAME);
@@ -190,7 +190,7 @@ export class MatchTimer extends EventEmitter {
 
     this._matchConfig = value;
     this._matchLengthSeconds = value.delayTime + value.autoTime + value.transitionTime + value.teleTime;
-    this._secondsLeftInMatch = this._matchLengthSeconds;
+    this._secondsLeftInMatch = this.matchLength;
     this._secondsLeftInMode = value.delayTime;
   }
 
