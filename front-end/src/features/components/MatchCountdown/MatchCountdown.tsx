@@ -53,13 +53,13 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
   useEffect(() => {
     if (!timer.inProgress()) {
       timer.reset();
-      setTime(timer.timeLeft);
-      setModeTime(timer.modeTimeLeft);
+      setTime(timer.secondsLeftInMatch);
+      setModeTime(timer.secondsLeftInMode);
     }
 
     const tick = setInterval(() => {
-      setTime(timer.timeLeft);
-      setModeTime(timer.modeTimeLeft);
+      setTime(timer.secondsLeftInMatch);
+      setModeTime(timer.secondsLeftInMode);
     }, 500);
 
     return () => {
@@ -77,8 +77,8 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
 
   useEffect(() => {
     if (matchState === MatchState.MATCH_IN_PROGRESS && timer.inProgress()) {
-      setTime(timer.timeLeft);
-      setModeTime(timer.modeTimeLeft);
+      setTime(timer.secondsLeftInMatch);
+      setModeTime(timer.secondsLeftInMode);
     }
   }, [matchState]);
 
@@ -88,7 +88,7 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
 
   const onPrestart = () => {
     timer.reset();
-    setTime(timer.timeLeft);
+    setTime(timer.secondsLeftInMatch);
   };
   const onStart = () => {
     if (audio) startAudio.play();

@@ -41,8 +41,8 @@ export class MatchTimer extends EventEmitter {
 
   // These three fields get initialized by the matchConfig setter, which is used in the constructor.
   private _matchConfig!: MatchConfiguration;
-  private _timeLeft!: number;
-  private _modeTimeLeft!: number;
+  private _secondsLeftInMatch!: number;
+  private _secondsLeftInMode!: number;
 
   constructor() {
     super();
@@ -57,23 +57,23 @@ export class MatchTimer extends EventEmitter {
       let matchPhaseEvent: MatchTimer.Events;
       if (this.matchConfig.delayTime > 0) {
         this._mode = MatchMode.PRESTART;
-        this._modeTimeLeft = this.matchConfig.delayTime;
+        this._secondsLeftInMode = this.matchConfig.delayTime;
         matchPhaseEvent = MatchTimer.Events.PRESTART;
       } else if (this.matchConfig.autoTime > 0) {
         this._mode = MatchMode.AUTONOMOUS;
-        this._modeTimeLeft = this.matchConfig.autoTime;
+        this._secondsLeftInMode = this.matchConfig.autoTime;
         matchPhaseEvent = MatchTimer.Events.AUTONOMOUS;
       } else if (this.matchConfig.transitionTime > 0) {
         this._mode = MatchMode.TRANSITION;
-        this._modeTimeLeft = this.matchConfig.transitionTime;
+        this._secondsLeftInMode = this.matchConfig.transitionTime;
         matchPhaseEvent = MatchTimer.Events.TRANSITION;
       } else {
         this._mode = MatchMode.TELEOPERATED;
-        this._modeTimeLeft = this.matchConfig.teleTime;
+        this._secondsLeftInMode = this.matchConfig.teleTime;
         matchPhaseEvent = MatchTimer.Events.TELEOPERATED;
       }
-      this._timeLeft = getMatchTime(this._matchConfig);
-      this.emit(MatchTimer.Events.START, this._timeLeft);
+      this._secondsLeftInMatch = getMatchTime(this._matchConfig);
+      this.emit(MatchTimer.Events.START, this._secondsLeftInMatch);
       this.emit(matchPhaseEvent);
       this._timerID = setInterval(() => {
         this.tick();
@@ -86,7 +86,7 @@ export class MatchTimer extends EventEmitter {
       clearInterval(this._timerID);
       this._timerID = null;
       this._mode = MatchMode.ENDED;
-      this._timeLeft = 0;
+      this._secondsLeftInMatch = 0;
       this.emit(MatchTimer.Events.END);
     }
   }
@@ -96,7 +96,7 @@ export class MatchTimer extends EventEmitter {
       clearInterval(this._timerID);
       this._timerID = null;
       this._mode = MatchMode.ABORTED;
-      this._timeLeft = 0;
+      this._secondsLeftInMatch = 0;
       this.emit(MatchTimer.Events.ABORT);
     }
   }
@@ -105,8 +105,8 @@ export class MatchTimer extends EventEmitter {
     if (!this.inProgress()) {
       this._mode = MatchMode.RESET;
       this._timerID = null;
-      this._timeLeft = getMatchTime(this._matchConfig);
-      this._modeTimeLeft = this._matchConfig.delayTime;
+      this._secondsLeftInMatch = getMatchTime(this._matchConfig);
+      this._secondsLeftInMode = this._matchConfig.delayTime;
     }
   }
 
@@ -115,35 +115,35 @@ export class MatchTimer extends EventEmitter {
   }
 
   private tick(): undefined {
-    if (this._timeLeft === 0) {
+    if (this._secondsLeftInMatch === 0) {
       this.stop();
       return;
     }
 
-    this._modeTimeLeft--;
-    this._timeLeft--;
+    this._secondsLeftInMode--;
+    this._secondsLeftInMatch--;
 
-    if (this._modeTimeLeft === 0) {
+    if (this._secondsLeftInMode === 0) {
       switch (this._mode) {
         case MatchMode.PRESTART:
           if (this.matchConfig.autoTime > 0) {
             this._mode = MatchMode.AUTONOMOUS;
-            this._modeTimeLeft = this.matchConfig.autoTime;
+            this._secondsLeftInMode = this.matchConfig.autoTime;
             this.emit(MatchTimer.Events.AUTONOMOUS);
           } else {
             this._mode = MatchMode.TELEOPERATED;
-            this._modeTimeLeft = this.matchConfig.teleTime;
+            this._secondsLeftInMode = this.matchConfig.teleTime;
             this.emit(MatchTimer.Events.TELEOPERATED);
           }
           break;
         case MatchMode.AUTONOMOUS:
           if (this.matchConfig.transitionTime > 0) {
             this._mode = MatchMode.TRANSITION;
-            this._modeTimeLeft = this.matchConfig.transitionTime;
+            this._secondsLeftInMode = this.matchConfig.transitionTime;
             this.emit(MatchTimer.Events.TRANSITION);
           } else if (this.matchConfig.teleTime > 0) {
             this._mode = MatchMode.TELEOPERATED;
-            this._modeTimeLeft = this.matchConfig.teleTime;
+            this._secondsLeftInMode = this.matchConfig.teleTime;
             this.emit(MatchTimer.Events.TELEOPERATED);
           } else {
             this.stop();
@@ -152,7 +152,7 @@ export class MatchTimer extends EventEmitter {
         case MatchMode.TRANSITION:
           if (this.matchConfig.teleTime > 0) {
             this._mode = MatchMode.TELEOPERATED;
-            this._modeTimeLeft = this.matchConfig.teleTime;
+            this._secondsLeftInMode = this.matchConfig.teleTime;
             this.emit(MatchTimer.Events.TELEOPERATED);
           } else {
             this.stop();
@@ -161,7 +161,7 @@ export class MatchTimer extends EventEmitter {
     } else {
       if (
         this.matchConfig.endTime > 0 &&
-        this._timeLeft === this.matchConfig.endTime
+        this._secondsLeftInMatch === this.matchConfig.endTime
       ) {
         this._mode = MatchMode.ENDGAME;
         this.emit(MatchTimer.Events.ENDGAME);
@@ -179,16 +179,16 @@ export class MatchTimer extends EventEmitter {
     }
 
     this._matchConfig = value;
-    this._timeLeft = getMatchTime(value);
-    this._modeTimeLeft = value.delayTime;
+    this._secondsLeftInMatch = getMatchTime(value);
+    this._secondsLeftInMode = value.delayTime;
   }
 
-  get timeLeft(): number {
-    return this._timeLeft;
+  get secondsLeftInMatch(): number {
+    return this._secondsLeftInMatch;
   }
 
-  get modeTimeLeft(): number {
-    return this._modeTimeLeft;
+  get secondsLeftInMode(): number {
+    return this._secondsLeftInMode;
   }
 
   get mode(): MatchMode {
