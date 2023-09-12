@@ -36,21 +36,20 @@ export enum MatchMode {
 }
 
 export class MatchTimer extends EventEmitter {
-  private _matchConfig: MatchConfiguration;
-
   private _mode: MatchMode;
   private _timerID: any;
-  private _timeLeft: number;
-  private _modeTimeLeft: number;
+
+  // These three fields get initialized by the matchConfig setter, which is used in the constructor.
+  private _matchConfig!: MatchConfiguration;
+  private _timeLeft!: number;
+  private _modeTimeLeft!: number;
 
   constructor() {
     super();
 
     this._mode = MatchMode.RESET;
     this._timerID = null;
-    this._matchConfig = FRC_MATCH_CONFIG;
-    this._timeLeft = getMatchTime(this._matchConfig);
-    this._modeTimeLeft = this._matchConfig.delayTime;
+    this.matchConfig = FRC_MATCH_CONFIG;
   }
 
   public start(): undefined {
@@ -175,7 +174,13 @@ export class MatchTimer extends EventEmitter {
   }
 
   set matchConfig(value: MatchConfiguration) {
+    if (this.inProgress()) {
+      throw new Error("Do not change the match config while the match timer is active");
+    }
+
     this._matchConfig = value;
+    this._timeLeft = getMatchTime(value);
+    this._modeTimeLeft = value.delayTime;
   }
 
   get timeLeft(): number {
