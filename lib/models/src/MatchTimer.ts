@@ -38,7 +38,7 @@ export enum MatchMode {
 export class MatchTimer extends EventEmitter {
   private startTimeMonotonicMs: number;
   private _mode: MatchMode;
-  private _timerID: any;
+  private timerID: any;
 
   // These fields get initialized by the matchConfig setter, which is used in the constructor.
   private _matchConfig!: MatchConfiguration;
@@ -51,7 +51,7 @@ export class MatchTimer extends EventEmitter {
 
     this.startTimeMonotonicMs = 0;
     this._mode = MatchMode.RESET;
-    this._timerID = null;
+    this.timerID = null;
     this.matchConfig = FRC_MATCH_CONFIG;
   }
 
@@ -79,14 +79,14 @@ export class MatchTimer extends EventEmitter {
       this._secondsLeftInMatch = this._matchLengthSeconds;
       this.emit(MatchTimer.Events.START, this._secondsLeftInMatch);
       this.emit(matchPhaseEvent);
-      this._timerID = setInterval(() => this.checkStatus(), 50);
+      this.timerID = setInterval(() => this.checkStatus(), 50);
     }
   }
 
   public stop(): undefined {
     if (this.inProgress()) {
-      clearInterval(this._timerID);
-      this._timerID = null;
+      clearInterval(this.timerID);
+      this.timerID = null;
       this._mode = MatchMode.ENDED;
       this._secondsLeftInMatch = 0;
       this.emit(MatchTimer.Events.END);
@@ -95,8 +95,8 @@ export class MatchTimer extends EventEmitter {
 
   public abort(): undefined {
     if (this.inProgress()) {
-      clearInterval(this._timerID);
-      this._timerID = null;
+      clearInterval(this.timerID);
+      this.timerID = null;
       this._mode = MatchMode.ABORTED;
       this._secondsLeftInMatch = 0;
       this.emit(MatchTimer.Events.ABORT);
@@ -106,14 +106,14 @@ export class MatchTimer extends EventEmitter {
   public reset(): undefined {
     if (!this.inProgress()) {
       this._mode = MatchMode.RESET;
-      this._timerID = null;
+      this.timerID = null;
       this._secondsLeftInMatch = this._matchLengthSeconds;
       this._secondsLeftInMode = this._matchConfig.delayTime;
     }
   }
 
   public inProgress(): boolean {
-    return this._timerID !== null;
+    return this.timerID !== null;
   }
 
   private checkStatus(): undefined {
