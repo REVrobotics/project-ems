@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
-import { getMatchTime, MatchTimer } from '@toa-lib/models';
+import { MatchTimer } from '@toa-lib/models';
 import MatchUpdateListener from 'src/components/MatchUpdateListener/MatchUpdateListener';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
 import {
@@ -21,9 +21,7 @@ const MatchPlay: FC = () => {
 
   // Timer Style
   const barWidth: number =
-    ((getMatchTime(timer.matchConfig) - timeLeft) /
-      getMatchTime(timer.matchConfig)) *
-    100;
+    ((timer.matchLength - timeLeft) / timer.matchLength) * 100;
 
   const [timerStyle, setTimerStyle] = useState('green-bar');
 

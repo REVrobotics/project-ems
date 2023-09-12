@@ -39,8 +39,9 @@ export class MatchTimer extends EventEmitter {
   private _mode: MatchMode;
   private _timerID: any;
 
-  // These three fields get initialized by the matchConfig setter, which is used in the constructor.
+  // These fields get initialized by the matchConfig setter, which is used in the constructor.
   private _matchConfig!: MatchConfiguration;
+  private _matchLengthSeconds!: number;
   private _secondsLeftInMatch!: number;
   private _secondsLeftInMode!: number;
 
@@ -72,7 +73,7 @@ export class MatchTimer extends EventEmitter {
         this._secondsLeftInMode = this.matchConfig.teleTime;
         matchPhaseEvent = MatchTimer.Events.TELEOPERATED;
       }
-      this._secondsLeftInMatch = getMatchTime(this._matchConfig);
+      this._secondsLeftInMatch = this._matchLengthSeconds;
       this.emit(MatchTimer.Events.START, this._secondsLeftInMatch);
       this.emit(matchPhaseEvent);
       this._timerID = setInterval(() => {
@@ -105,7 +106,7 @@ export class MatchTimer extends EventEmitter {
     if (!this.inProgress()) {
       this._mode = MatchMode.RESET;
       this._timerID = null;
-      this._secondsLeftInMatch = getMatchTime(this._matchConfig);
+      this._secondsLeftInMatch = this._matchLengthSeconds;
       this._secondsLeftInMode = this._matchConfig.delayTime;
     }
   }
@@ -179,8 +180,13 @@ export class MatchTimer extends EventEmitter {
     }
 
     this._matchConfig = value;
-    this._secondsLeftInMatch = getMatchTime(value);
+    this._matchLengthSeconds = value.delayTime + value.autoTime + value.transitionTime + value.teleTime;
+    this._secondsLeftInMatch = this._matchLengthSeconds;
     this._secondsLeftInMode = value.delayTime;
+  }
+
+  get matchLength(): number {
+    return this._matchLengthSeconds;
   }
 
   get secondsLeftInMatch(): number {
@@ -207,10 +213,4 @@ export namespace MatchTimer {
     END = "end",
     ABORT = "abort",
   }
-}
-
-export function getMatchTime(config: MatchConfiguration): number {
-  return (
-    config.delayTime + config.autoTime + config.transitionTime + config.teleTime
-  );
 }
