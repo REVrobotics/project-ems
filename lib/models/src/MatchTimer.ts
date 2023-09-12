@@ -83,16 +83,6 @@ export class MatchTimer extends EventEmitter {
     }
   }
 
-  public stop(): undefined {
-    if (this.inProgress()) {
-      clearInterval(this.timerID);
-      this.timerID = null;
-      this._mode = MatchMode.ENDED;
-      this._secondsLeftInMatch = 0;
-      this.emit(MatchTimer.Events.END);
-    }
-  }
-
   public abort(): undefined {
     if (this.inProgress()) {
       clearInterval(this.timerID);
@@ -109,6 +99,16 @@ export class MatchTimer extends EventEmitter {
       this.timerID = null;
       this._secondsLeftInMatch = this.matchLength;
       this._secondsLeftInMode = this.matchConfig.delayTime;
+    }
+  }
+
+  private stop(): undefined {
+    if (this.inProgress()) {
+      clearInterval(this.timerID);
+      this.timerID = null;
+      this._mode = MatchMode.ENDED;
+      this._secondsLeftInMatch = 0;
+      this.emit(MatchTimer.Events.END);
     }
   }
 

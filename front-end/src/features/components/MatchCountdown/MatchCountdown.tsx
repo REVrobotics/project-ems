@@ -106,7 +106,6 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
   };
   const onEnd = () => {
     if (audio) endAudio.play();
-    timer.stop();
   };
 
   const onEndgame = () => {
