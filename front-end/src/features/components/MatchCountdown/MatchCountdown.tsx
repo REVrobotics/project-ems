@@ -1,4 +1,4 @@
-import { MatchState } from '@toa-lib/models';
+import { MatchState, MatchTimer } from '@toa-lib/models';
 import { Duration } from 'luxon';
 import { FC, useEffect } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
@@ -43,10 +43,10 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
       socket?.on('match:start', onStart);
       socket?.on('match:abort', onAbort);
 
-      timer.on('timer:transition', onTransition);
-      timer.on('timer:tele', onTele);
-      timer.on('timer:endgame', onEndgame);
-      timer.on('timer:end', onEnd);
+      timer.on(MatchTimer.Events.TRANSITION, onTransition);
+      timer.on(MatchTimer.Events.TELEOPERATED, onTele);
+      timer.on(MatchTimer.Events.ENDGAME, onEndgame);
+      timer.on(MatchTimer.Events.END, onEnd);
     }
   }, [connected]);
 
@@ -67,10 +67,10 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
       socket?.off('match:start', onStart);
       socket?.off('match:abort', onAbort);
 
-      timer.off('timer:transition', onTransition);
-      timer.off('timer:tele', onTele);
-      timer.off('timer:endgame', onEndgame);
-      timer.off('timer:end', onEnd);
+      timer.off(MatchTimer.Events.TRANSITION, onTransition);
+      timer.off(MatchTimer.Events.TELEOPERATED, onTele);
+      timer.off(MatchTimer.Events.ENDGAME, onEndgame);
+      timer.off(MatchTimer.Events.END, onEnd);
       clearInterval(tick);
     };
   }, []);

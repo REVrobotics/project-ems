@@ -207,23 +207,23 @@ export class EmsFrcFms {
 
             // Signal DriverStation Start
             DriverstationSupport.getInstance().driverStationMatchStart();
-            this._timer.on("timer:auto", () => {
+            this._timer.on(MatchTimer.Events.AUTO, () => {
                 this.matchState = MatchMode.AUTONOMOUS;
                 logger.info("▶ Autonomous");
             });
-            this._timer.on("timer:transition", () => {
+            this._timer.on(MatchTimer.Events.TRANSITION, () => {
                 this.matchState = MatchMode.TRANSITION;
                 logger.info("▶ Transistion");
             });
-            this._timer.on("timer:tele", () => {
+            this._timer.on(MatchTimer.Events.TELEOPERATED, () => {
                 this.matchState = MatchMode.TELEOPERATED;
                 logger.info("▶ Teleoperated");
             });
-            this._timer.on("timer:endgame", () => {
+            this._timer.on(MatchTimer.Events.ENDGAME, () => {
                 this.matchState = MatchMode.ENDGAME;
                 logger.info("▶ Endgame");
             });
-            this._timer.on("timer:end", () => {
+            this._timer.on(MatchTimer.Events.END, () => {
                 this.removeMatchlisteners();
                 this.matchState = MatchMode.ENDED;
                 logger.info("⏹ Local Timer Ended");
@@ -258,11 +258,11 @@ export class EmsFrcFms {
     }
 
     private removeMatchlisteners() {
-        this._timer.removeAllListeners("timer:auto");
-        this._timer.removeAllListeners("timer:transition");
-        this._timer.removeAllListeners("timer:tele");
-        this._timer.removeAllListeners("timer:endgame");
-        this._timer.removeAllListeners("timer:end");
+        this._timer.removeAllListeners(MatchTimer.Events.AUTO);
+        this._timer.removeAllListeners(MatchTimer.Events.TRANSITION);
+        this._timer.removeAllListeners(MatchTimer.Events.TELEOPERATED);
+        this._timer.removeAllListeners(MatchTimer.Events.ENDGAME);
+        this._timer.removeAllListeners(MatchTimer.Events.END);
     }
 
     private startDriverStation() {

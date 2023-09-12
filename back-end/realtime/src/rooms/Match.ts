@@ -82,30 +82,30 @@ export default class Match extends Room {
     });
     socket.on("match:start", () => {
       if (this.timer.inProgress()) return;
-      this.timer.once("timer:start", () => {
+      this.timer.once(MatchTimer.Events.START, () => {
         this.emitToAll("match:start", "start");
         this.state = MatchState.MATCH_IN_PROGRESS;
         logger.info("match in progress");
       });
-      this.timer.once("timer:auto", () => {
+      this.timer.once(MatchTimer.Events.AUTONOMOUS, () => {
         this.emitToAll("match:auto");
         logger.info("match auto");
       });
-      this.timer.once("timer:tele", () => {
+      this.timer.once(MatchTimer.Events.TELEOPERATED, () => {
         this.emitToAll("match:tele");
         logger.info("match tele");
       });
-      this.timer.once("timer:endgame", () => {
+      this.timer.once(MatchTimer.Events.ENDGAME, () => {
         this.emitToAll("match:endgame");
         logger.info("match endgame");
       });
-      this.timer.once("timer:end", () => {
+      this.timer.once(MatchTimer.Events.END, () => {
         this.emitToAll("match:end");
         this.timer.removeAllListeners();
         this.state = MatchState.MATCH_COMPLETE;
         logger.info("match completed");
       });
-      this.timer.once("timer:abort", () => {
+      this.timer.once(MatchTimer.Events.ABORT, () => {
         this.emitToAll("match:abort");
         this.timer.removeAllListeners();
         this.state = MatchState.PRESTART_READY;

@@ -1,6 +1,6 @@
 import { FC, useState, useEffect } from 'react';
 import { useRecoilValue } from 'recoil';
-import { getMatchTime } from '@toa-lib/models';
+import { getMatchTime, MatchTimer } from '@toa-lib/models';
 import MatchUpdateListener from 'src/components/MatchUpdateListener/MatchUpdateListener';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
 import {
@@ -28,16 +28,16 @@ const MatchPlay: FC = () => {
   const [timerStyle, setTimerStyle] = useState('green-bar');
 
   useEffect(() => {
-    timer.on('timer:start', onTimerStart);
-    timer.on('timer:endgame', onTimerEndgame);
-    timer.on('timer:end', onTimerEnd);
-    timer.on('timer:abort', onTimerEnd);
+    timer.on(MatchTimer.Events.START, onTimerStart);
+    timer.on(MatchTimer.Events.ENDGAME, onTimerEndgame);
+    timer.on(MatchTimer.Events.END, onTimerEnd);
+    timer.on(MatchTimer.Events.ABORT, onTimerEnd);
 
     return () => {
-      timer.off('timer:start', onTimerStart);
-      timer.off('timer:endgame', onTimerEndgame);
-      timer.off('timer:end', onTimerEnd);
-      timer.off('timer:abort', onTimerEnd);
+      timer.off(MatchTimer.Events.START, onTimerStart);
+      timer.off(MatchTimer.Events.ENDGAME, onTimerEndgame);
+      timer.off(MatchTimer.Events.END, onTimerEnd);
+      timer.off(MatchTimer.Events.ABORT, onTimerEnd);
     };
   });
 
