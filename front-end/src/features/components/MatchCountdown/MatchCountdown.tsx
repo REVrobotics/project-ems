@@ -12,11 +12,7 @@ import {
   MATCH_ENDGAME,
   MATCH_END
 } from 'src/apps/AudienceDisplay/Audio';
-import {
-  matchTimeAtom,
-  matchTimeModeAtom,
-  timer
-} from 'src/stores/NewRecoil';
+import { matchTimeAtom, matchTimeModeAtom, timer } from 'src/stores/NewRecoil';
 
 const startAudio = initAudio(MATCH_START);
 const transitionAudio = initAudio(MATCH_TRANSITION);
@@ -55,7 +51,7 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
     const tick = setInterval(() => {
       setTime(timer.secondsLeftInMatch);
       setModeTime(timer.secondsLeftInMode);
-    }, 500);
+    }, 150);
 
     return () => {
       socket?.off(MatchSocketEvent.PRESTART, onPrestart);
