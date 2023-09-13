@@ -283,8 +283,6 @@ export const tournamentScheduleItemAtomFamily = atomFamily<
 });
 
 /* MATCHES SECTION - state management involving matches for tournaments */
-export const timer: MatchTimer = new MatchTimer();
-
 export const matchStateAtom = atom<MatchState>({
   key: 'matchStateAtom2',
   default: MatchState.MATCH_NOT_SELECTED

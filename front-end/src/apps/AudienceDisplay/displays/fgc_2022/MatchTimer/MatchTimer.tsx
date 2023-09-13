@@ -2,7 +2,7 @@ import { FC, useEffect } from 'react';
 import { useRecoilState } from 'recoil';
 import { useSocket } from 'src/api/SocketProvider';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
-import { matchInProgress, timer } from 'src/stores/Recoil';
+import { matchInProgressAtom, timer } from 'src/stores/NewRecoil';
 import { Match, MatchParticipant, MatchSocketEvent } from '@toa-lib/models';
 import {
   initAudio,
@@ -60,7 +60,7 @@ const BlueParticipant: FC<{ participant: MatchParticipant }> = ({
 };
 
 const MatchTimer: FC = () => {
-  const [match, setMatch] = useRecoilState(matchInProgress);
+  const [match, setMatch] = useRecoilState(matchInProgressAtom);
   const [socket, connected] = useSocket();
 
   const redAlliance = match?.participants?.filter((p) => p.station < 20);

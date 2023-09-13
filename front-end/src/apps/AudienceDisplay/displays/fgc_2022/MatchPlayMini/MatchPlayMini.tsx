@@ -3,7 +3,7 @@ import { useRecoilState } from 'recoil';
 import { useSearchParams } from 'react-router-dom';
 import { useSocket } from 'src/api/SocketProvider';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
-import { matchInProgress, timer } from 'src/stores/Recoil';
+import { matchInProgressAtom, timer } from 'src/stores/NewRecoil';
 import './MatchPlayMini.css';
 import { Match, MatchSocketEvent } from '@toa-lib/models';
 import {
@@ -22,7 +22,7 @@ const endgameAudio = initAudio(MATCH_ENDGAME);
 const endAudio = initAudio(MATCH_END);
 
 const MatchPlayMini: FC = () => {
-  const [match, setMatch] = useRecoilState(matchInProgress);
+  const [match, setMatch] = useRecoilState(matchInProgressAtom);
   const [socket, connected] = useSocket();
   const [searchParams] = useSearchParams();
   const position = searchParams.get('position');

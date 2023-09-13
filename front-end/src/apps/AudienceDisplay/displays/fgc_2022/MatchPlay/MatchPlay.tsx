@@ -8,7 +8,7 @@ import {
 import { FC, useEffect } from 'react';
 import { useRecoilState } from 'recoil';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
-import { matchInProgress, timer } from 'src/stores/Recoil';
+import { matchInProgressAtom, timer } from 'src/stores/NewRecoil';
 import './MatchPlay.less';
 import { useSocket } from 'src/api/SocketProvider';
 
@@ -89,7 +89,7 @@ const StorageStatus: FC<{ level: number }> = ({ level }) => {
 };
 
 const MatchPlay: FC = () => {
-  const [match, setMatch] = useRecoilState(matchInProgress);
+  const [match, setMatch] = useRecoilState(matchInProgressAtom);
   const [socket, connected] = useSocket();
   const someDetails = match?.details;
   const [searchParams] = useSearchParams();
