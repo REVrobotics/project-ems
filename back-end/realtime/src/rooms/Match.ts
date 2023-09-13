@@ -21,6 +21,7 @@ export default class Match extends Room {
   private state: MatchState;
   private displayID: number;
   private timerInitializationDataProvider: (() => TimerInitializationData) | undefined;
+  private secondsSinceLastTimerSyncBroadcast: number;
   public readonly localEmitter: EventEmitter;
 
   public constructor(server: Server) {
@@ -31,6 +32,7 @@ export default class Match extends Room {
     this.state = MatchState.MATCH_NOT_SELECTED;
     this.displayID = 0;
     this.localEmitter = new EventEmitter();
+    this.secondsSinceLastTimerSyncBroadcast = 0;
 
     const matchRoom: Match = this;
     this.timer = new MatchTimer(true, {
@@ -50,7 +52,15 @@ export default class Match extends Room {
         matchRoom.emitToAll(MatchSocketEvent.RESET_TIMER);
       },
       broadcastSecondsLeftInMatch(secondsLeftInMatch: number): undefined {
-        matchRoom.emitToAll(MatchSocketEvent.SECONDS_REMAINING, secondsLeftInMatch);
+        // Avoid overloading the system by not sending these sync updates to the Web Sockets every second.
+        // However, local events should be sent every second.
+        if (matchRoom.secondsSinceLastTimerSyncBroadcast >= 5) {
+          matchRoom.emitToAll(MatchSocketEvent.SECONDS_REMAINING, secondsLeftInMatch);
+          matchRoom.secondsSinceLastTimerSyncBroadcast = 0;
+        } else {
+          matchRoom.localEmitter.emit(MatchSocketEvent.SECONDS_REMAINING, secondsLeftInMatch);
+          matchRoom.secondsSinceLastTimerSyncBroadcast++;
+        }
       },
     });
   }
