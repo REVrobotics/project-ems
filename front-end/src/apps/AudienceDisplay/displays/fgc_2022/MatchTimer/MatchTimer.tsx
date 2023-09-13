@@ -3,7 +3,12 @@ import { useRecoilState } from 'recoil';
 import { useSocket } from 'src/api/SocketProvider';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
 import { matchInProgressAtom, timer } from 'src/stores/NewRecoil';
-import { Match, MatchParticipant, MatchSocketEvent } from '@toa-lib/models';
+import {
+  CarbonCaptureDetails,
+  Match,
+  MatchParticipant,
+  MatchSocketEvent
+} from '@toa-lib/models';
 import {
   initAudio,
   MATCH_START,
@@ -66,7 +71,7 @@ const MatchTimer: FC = () => {
   const redAlliance = match?.participants?.filter((p) => p.station < 20);
   const blueAlliance = match?.participants?.filter((p) => p.station >= 20);
 
-  const name = match?.matchName ? match.matchName.split(' ')[2] : '';
+  const name = match?.name ? match.name.split(' ')[2] : '';
 
   useEffect(() => {
     if (connected) {
@@ -104,7 +109,7 @@ const MatchTimer: FC = () => {
     endAudio.play();
   };
 
-  const matchUpdate = (newMatch: Match) => {
+  const matchUpdate = (newMatch: Match<CarbonCaptureDetails>) => {
     if (timer.inProgress()) {
       setMatch(newMatch);
     }
@@ -145,9 +150,7 @@ const MatchTimer: FC = () => {
             className={'teams-container teams-container-left'}
           >
             <div className={'teams red-bg'}>
-              {redAlliance?.map((p) => (
-                <RedParticipant key={p.matchParticipantKey} participant={p} />
-              ))}
+              {redAlliance?.map((p) => <RedParticipant participant={p} />)}
             </div>
           </div>
           <div id={'fgc-timer-bot-center'}>
@@ -163,9 +166,7 @@ const MatchTimer: FC = () => {
             className={'teams-container teams-container-right'}
           >
             <div className={'teams blue-bg'}>
-              {blueAlliance?.map((p) => (
-                <BlueParticipant key={p.matchParticipantKey} participant={p} />
-              ))}
+              {blueAlliance?.map((p) => <BlueParticipant participant={p} />)}
             </div>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import {
+  CarbonCaptureDetails,
   defaultCarbonCaptureDetails,
   isCarbonCaptureDetails,
   Match,
@@ -102,7 +103,7 @@ const MatchPlay: FC = () => {
     ?.filter((p) => p.station >= 20)
     .slice(0, 3);
 
-  const name = getName(match ? match.matchName : '');
+  const name = getName(match ? match.name : '');
 
   const details = isCarbonCaptureDetails(someDetails)
     ? someDetails
@@ -130,7 +131,7 @@ const MatchPlay: FC = () => {
     };
   }, []);
 
-  const matchUpdate = (newMatch: Match) => {
+  const matchUpdate = (newMatch: Match<CarbonCaptureDetails>) => {
     if (timer.inProgress()) {
       setMatch(newMatch);
     }
@@ -143,11 +144,7 @@ const MatchPlay: FC = () => {
           <div id='play-display-left-score'>
             <div className={`teams left-score ${flip ? 'blue-bg' : 'red-bg'}`}>
               {(flip ? blueAlliance : redAlliance)?.map((p, i) => (
-                <LeftParticipant
-                  key={p.matchParticipantKey}
-                  participant={p}
-                  level={redStorage[i]}
-                />
+                <LeftParticipant participant={p} level={redStorage[i]} />
               ))}
             </div>
           </div>
@@ -204,11 +201,7 @@ const MatchPlay: FC = () => {
           <div id='play-display-right-score'>
             <div className={`teams right-score ${flip ? 'red-bg' : 'blue-bg'}`}>
               {(flip ? redAlliance : blueAlliance)?.map((p, i) => (
-                <RightParticipant
-                  key={p.matchParticipantKey}
-                  participant={p}
-                  level={blueStorage[i]}
-                />
+                <RightParticipant participant={p} level={blueStorage[i]} />
               ))}
             </div>
           </div>

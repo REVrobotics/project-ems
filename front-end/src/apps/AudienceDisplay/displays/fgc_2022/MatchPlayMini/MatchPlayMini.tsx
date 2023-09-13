@@ -5,7 +5,7 @@ import { useSocket } from 'src/api/SocketProvider';
 import MatchCountdown from 'src/features/components/MatchCountdown/MatchCountdown';
 import { matchInProgressAtom, timer } from 'src/stores/NewRecoil';
 import './MatchPlayMini.css';
-import { Match, MatchSocketEvent } from '@toa-lib/models';
+import { CarbonCaptureDetails, Match, MatchSocketEvent } from '@toa-lib/models';
 import {
   initAudio,
   MATCH_START,
@@ -63,7 +63,7 @@ const MatchPlayMini: FC = () => {
     endAudio.play();
   };
 
-  const matchUpdate = (newMatch: Match) => {
+  const matchUpdate = (newMatch: Match<CarbonCaptureDetails>) => {
     if (timer.inProgress()) {
       setMatch(newMatch);
     }
