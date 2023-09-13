@@ -64,6 +64,12 @@ export interface TimerTruthListener {
   onSecondsLeftInMatchUpdate(handler: (secondsLeftInMatch: number) => undefined): undefined;
 }
 
+export interface TimerEventPayload {
+  initializing: boolean;
+}
+const initializingPayload: TimerEventPayload = { initializing: true };
+const notInitializingPayload: TimerEventPayload = { initializing: false };
+
 export class MatchTimer extends EventEmitter {
   private startTimeMonotonicMs: number;
   private _mode: MatchMode;
@@ -99,7 +105,7 @@ export class MatchTimer extends EventEmitter {
       this.truthBroadcaster = helper as TimerTruthBroadcaster;
       this.truthBroadcaster.setInitializationDataProvider(this.initializationDataProvider);
     } else {
-      const handleTimeRemainingUpdate = (trueSecondsLeftInMatch: number): undefined => {
+      const handleTimeRemainingUpdate = (trueSecondsLeftInMatch: number, eventPayload: TimerEventPayload): undefined => {
         if (trueSecondsLeftInMatch < this.secondsLeftInMatch) {
           const timeReceivedMs = performance.now();
           /*
@@ -111,7 +117,7 @@ export class MatchTimer extends EventEmitter {
            * (to ensure that all the normal state updates and events happen).
            */
           while (trueSecondsLeftInMatch < this.secondsLeftInMatch) {
-            this.tick();
+            this.tick(eventPayload);
           }
 
           // Update our local start time to be less late (if appropriate), so that we don't go right back to being late next cycle.
@@ -130,13 +136,13 @@ export class MatchTimer extends EventEmitter {
         this.setMatchConfigInternal(initData.matchConfig);
         if (matchInProgress(initData.matchMode)) {
           this.internalStart();
-          handleTimeRemainingUpdate(initData.secondsLeftInMatch);
+          handleTimeRemainingUpdate(initData.secondsLeftInMatch, initializingPayload);
         }
       });
       this.truthListener.onStart(() => this.internalStart());
       this.truthListener.onAbort(() => this.internalAbort());
       this.truthListener.onReset(() => this.internalReset());
-      this.truthListener.onSecondsLeftInMatchUpdate(handleTimeRemainingUpdate);
+      this.truthListener.onSecondsLeftInMatchUpdate(secondsLeft => handleTimeRemainingUpdate(secondsLeft, notInitializingPayload));
       this.truthListener.requestInitialization();
     }
   }
@@ -195,19 +201,23 @@ export class MatchTimer extends EventEmitter {
         matchPhaseEvent = MatchTimer.Events.TELEOPERATED;
       }
       this._secondsLeftInMatch = this.matchLength;
-      this.emit(MatchTimer.Events.START, this.secondsLeftInMatch);
-      this.emit(matchPhaseEvent);
+
+      // We're not _technically_ initializing here, but we don't want both the start and phase sounds to play,
+      // so we say that the phase occurs during initialization here.
+      this.emit(MatchTimer.Events.START, notInitializingPayload);
+      this.emit(matchPhaseEvent, initializingPayload);
+
       this.timerID = setInterval(() => this.checkStatus(), 50);
     }
   }
 
-  private stop(): undefined {
+  private stop(payload: TimerEventPayload): undefined {
     if (this.inProgress()) {
       clearInterval(this.timerID);
       this.timerID = null;
       this._mode = MatchMode.ENDED;
       this._secondsLeftInMatch = 0;
-      this.emit(MatchTimer.Events.END);
+      this.emit(MatchTimer.Events.END, payload);
     }
   }
 
@@ -220,7 +230,7 @@ export class MatchTimer extends EventEmitter {
       this.timerID = null;
       this._mode = MatchMode.ABORTED;
       this._secondsLeftInMatch = 0;
-      this.emit(MatchTimer.Events.ABORT);
+      this.emit(MatchTimer.Events.ABORT, notInitializingPayload);
     }
   }
 
@@ -240,13 +250,13 @@ export class MatchTimer extends EventEmitter {
     const msSinceStart = performance.now() - this.startTimeMonotonicMs;
     const wholeSecondsSinceStart = Math.floor(msSinceStart * 0.001);
     if (this.matchLength - wholeSecondsSinceStart < this.secondsLeftInMatch) {
-      this.tick();
+      this.tick(notInitializingPayload);
     }
   }
 
-  private tick(): undefined {
+  private tick(eventPayload: TimerEventPayload): undefined {
     if (this.secondsLeftInMatch === 0) {
-      this.stop();
+      this.stop(eventPayload);
       return;
     }
 
@@ -263,33 +273,33 @@ export class MatchTimer extends EventEmitter {
           if (this.matchConfig.autoTime > 0) {
             this._mode = MatchMode.AUTONOMOUS;
             this._secondsLeftInMode = this.matchConfig.autoTime;
-            this.emit(MatchTimer.Events.AUTONOMOUS);
+            this.emit(MatchTimer.Events.AUTONOMOUS, eventPayload);
           } else {
             this._mode = MatchMode.TELEOPERATED;
             this._secondsLeftInMode = this.matchConfig.teleTime;
-            this.emit(MatchTimer.Events.TELEOPERATED);
+            this.emit(MatchTimer.Events.TELEOPERATED, eventPayload);
           }
           break;
         case MatchMode.AUTONOMOUS:
           if (this.matchConfig.transitionTime > 0) {
             this._mode = MatchMode.TRANSITION;
             this._secondsLeftInMode = this.matchConfig.transitionTime;
-            this.emit(MatchTimer.Events.TRANSITION);
+            this.emit(MatchTimer.Events.TRANSITION, eventPayload);
           } else if (this.matchConfig.teleTime > 0) {
             this._mode = MatchMode.TELEOPERATED;
             this._secondsLeftInMode = this.matchConfig.teleTime;
-            this.emit(MatchTimer.Events.TELEOPERATED);
+            this.emit(MatchTimer.Events.TELEOPERATED, eventPayload);
           } else {
-            this.stop();
+            this.stop(eventPayload);
           }
           break;
         case MatchMode.TRANSITION:
           if (this.matchConfig.teleTime > 0) {
             this._mode = MatchMode.TELEOPERATED;
             this._secondsLeftInMode = this.matchConfig.teleTime;
-            this.emit(MatchTimer.Events.TELEOPERATED);
+            this.emit(MatchTimer.Events.TELEOPERATED, eventPayload);
           } else {
-            this.stop();
+            this.stop(eventPayload);
           }
       }
     } else {
@@ -298,7 +308,7 @@ export class MatchTimer extends EventEmitter {
         this.secondsLeftInMatch === this.matchConfig.endTime
       ) {
         this._mode = MatchMode.ENDGAME;
-        this.emit(MatchTimer.Events.ENDGAME);
+        this.emit(MatchTimer.Events.ENDGAME, eventPayload);
       }
     }
   }
