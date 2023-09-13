@@ -3,7 +3,9 @@ import {
   FCS_ALL_CLEAR,
   FCS_PREPARE_FIELD,
   MatchKey,
-  MatchSocketEvent
+  MatchSocketEvent,
+  TimerInitializationData,
+  TimerTruthListener
 } from '@toa-lib/models';
 import { Socket } from 'socket.io-client';
 import { useRecoilState } from 'recoil';
@@ -53,6 +55,16 @@ export const useSocket = (): [
         if (err.description) throw err.description;
         else throw err;
       });
+
+      // Timer events
+      socket.on(MatchSocketEvent.INIT_TIMER, timerEventHandlers.init);
+      socket?.on(MatchSocketEvent.START, timerEventHandlers.start);
+      socket?.on(MatchSocketEvent.ABORT, timerEventHandlers.abort);
+      socket?.on(MatchSocketEvent.RESET_TIMER, timerEventHandlers.reset);
+      socket?.on(
+        MatchSocketEvent.SECONDS_REMAINING,
+        timerEventHandlers.secondsRemaining
+      );
     }
   };
 
@@ -97,5 +109,38 @@ export async function sendUpdateFrcFmsSettings(
 ): Promise<void> {
   socket?.emit('frc-fms:settings-update', { hwFingerprint });
 }
+
+const timerEventHandlers = {
+  init: (initData: TimerInitializationData) => undefined,
+  start: () => undefined,
+  abort: () => undefined,
+  reset: () => undefined,
+  secondsRemaining: (secondsLeft: number) => undefined
+};
+
+export const timerTruthListener: TimerTruthListener = {
+  requestInitialization(): undefined {
+    socket?.emit(MatchSocketEvent.REQUEST_TIMER_INIT);
+  },
+  onInitialization(
+    handler: (initData: TimerInitializationData) => undefined
+  ): undefined {
+    timerEventHandlers.init = handler;
+  },
+  onStart(handler: () => undefined): undefined {
+    timerEventHandlers.start = handler;
+  },
+  onAbort(handler: () => undefined): undefined {
+    timerEventHandlers.abort = handler;
+  },
+  onReset(handler: () => undefined): undefined {
+    timerEventHandlers.reset = handler;
+  },
+  onSecondsLeftInMatchUpdate(
+    handler: (secondsLeftInMatch: number) => undefined
+  ): undefined {
+    timerEventHandlers.secondsRemaining = handler;
+  }
+};
 
 export default socket;

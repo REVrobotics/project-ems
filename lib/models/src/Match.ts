@@ -51,6 +51,12 @@ export enum MatchSocketEvent {
   ENDGAME = "match:endgame",
   END = "match:end",
   ABORT = "match:abort",
+
+  // Timer-specific events
+  INIT_TIMER = "match:initTimer",
+  REQUEST_TIMER_INIT = "match:requestTimerInit",
+  RESET_TIMER = "match:resetTimer",
+  SECONDS_REMAINING = "match:seconds",
 }
 
 export interface MatchMakerParams {

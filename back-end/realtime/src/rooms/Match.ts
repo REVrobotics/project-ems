@@ -7,6 +7,7 @@ import {
   MatchSocketEvent,
   MatchState,
   MatchTimer,
+  TimerInitializationData,
 } from "@toa-lib/models";
 import { EventEmitter } from "node:events";
 import { Server, Socket } from "socket.io";
@@ -19,6 +20,7 @@ export default class Match extends Room {
   private timer: MatchTimer;
   private state: MatchState;
   private displayID: number;
+  private timerInitializationDataProvider: (() => TimerInitializationData) | undefined;
   public readonly localEmitter: EventEmitter;
 
   public constructor(server: Server) {
@@ -26,13 +28,44 @@ export default class Match extends Room {
 
     this.key = null;
     this.match = null;
-    this.timer = new MatchTimer();
     this.state = MatchState.MATCH_NOT_SELECTED;
     this.displayID = 0;
     this.localEmitter = new EventEmitter();
+
+    const matchRoom: Match = this;
+    this.timer = new MatchTimer(true, {
+      setInitializationDataProvider(provider: () => TimerInitializationData): undefined {
+        matchRoom.timerInitializationDataProvider = provider;
+      },
+      broadcastInitializationData(initializationData: TimerInitializationData): undefined {
+        matchRoom.emitToAll(MatchSocketEvent.INIT_TIMER, initializationData);
+      },
+      broadcastStart(): undefined {
+        matchRoom.emitToAll(MatchSocketEvent.START);
+      },
+      broadcastAbort(): undefined {
+        matchRoom.emitToAll(MatchSocketEvent.ABORT);
+      },
+      broadcastReset(): undefined {
+        matchRoom.emitToAll(MatchSocketEvent.RESET_TIMER);
+      },
+      broadcastSecondsLeftInMatch(secondsLeftInMatch: number): undefined {
+        matchRoom.emitToAll(MatchSocketEvent.SECONDS_REMAINING, secondsLeftInMatch);
+      },
+    });
   }
 
   public initializeEvents(socket: Socket): void {
+    if (this.timerInitializationDataProvider) {
+      socket.emit(MatchSocketEvent.INIT_TIMER, this.timerInitializationDataProvider());
+    }
+
+    socket.on(MatchSocketEvent.REQUEST_TIMER_INIT, () => {
+      if (this.timerInitializationDataProvider) {
+        socket.emit(MatchSocketEvent.INIT_TIMER, this.timerInitializationDataProvider());
+      }
+    });
+
     // Emit the last known display
     socket.emit(MatchSocketEvent.DISPLAY, this.displayID);
 
@@ -73,6 +106,7 @@ export default class Match extends Room {
       this.emitToAll(MatchSocketEvent.PRESTART, key);
       this.emitToAll(MatchSocketEvent.DISPLAY, 1);
       this.displayID = 1;
+      this.timer.reset();
       this.state = MatchState.PRESTART_COMPLETE;
       logger.info(`prestarting ${key.eventKey}-${key.tournamentKey}-${key.id}`);
     });
@@ -107,7 +141,8 @@ export default class Match extends Room {
         logger.info("match completed");
       });
       this.timer.once(MatchTimer.Events.ABORT, () => {
-        this.emitToAll(MatchSocketEvent.ABORT);
+        // We don't need to emit an ABORT event here,
+        // because the timer will have called broadcastAbort()
         this.timer.removeAllListeners();
         this.state = MatchState.PRESTART_READY;
         logger.info("match aborted");
@@ -152,8 +187,8 @@ export default class Match extends Room {
     });
   }
 
-  private emitToAll(eventName: string, ...args: any[]): void {
-    this.localEmitter.emit(eventName, ...args);
-    this.broadcast().emit(eventName, ...args);
+  private emitToAll(event: MatchSocketEvent, ...args: any[]): void {
+    this.localEmitter.emit(event, ...args);
+    this.broadcast().emit(event, ...args);
   }
 }

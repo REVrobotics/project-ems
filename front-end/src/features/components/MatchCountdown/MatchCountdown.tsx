@@ -1,7 +1,7 @@
-import { MatchSocketEvent, MatchState, MatchTimer } from '@toa-lib/models';
+import { MatchSocketEvent, MatchTimer } from '@toa-lib/models';
 import { Duration } from 'luxon';
 import { FC, useEffect } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState } from 'recoil';
 import { useSocket } from 'src/api/SocketProvider';
 import {
   initAudio,
@@ -13,7 +13,6 @@ import {
   MATCH_END
 } from 'src/apps/AudienceDisplay/Audio';
 import {
-  matchStateAtom,
   matchTimeAtom,
   matchTimeModeAtom,
   timer
@@ -32,7 +31,6 @@ interface Props {
 }
 
 const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
-  const matchState = useRecoilValue(matchStateAtom);
   const [time, setTime] = useRecoilState(matchTimeAtom);
   const [modeTime, setModeTime] = useRecoilState(matchTimeModeAtom);
   const [socket, connected] = useSocket();
@@ -51,11 +49,8 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
   }, [connected]);
 
   useEffect(() => {
-    if (!timer.inProgress()) {
-      timer.reset();
-      setTime(timer.secondsLeftInMatch);
-      setModeTime(timer.secondsLeftInMode);
-    }
+    setTime(timer.secondsLeftInMatch);
+    setModeTime(timer.secondsLeftInMode);
 
     const tick = setInterval(() => {
       setTime(timer.secondsLeftInMatch);
@@ -75,24 +70,15 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
     };
   }, []);
 
-  useEffect(() => {
-    if (matchState === MatchState.MATCH_IN_PROGRESS && timer.inProgress()) {
-      setTime(timer.secondsLeftInMatch);
-      setModeTime(timer.secondsLeftInMode);
-    }
-  }, [matchState]);
-
   const timeDuration = Duration.fromObject({
     seconds: mode === 'timeLeft' ? time : modeTime
   });
 
   const onPrestart = () => {
-    timer.reset();
     setTime(timer.secondsLeftInMatch);
   };
   const onStart = () => {
     if (audio) startAudio.play();
-    timer.start();
   };
   const onTransition = () => {
     if (audio) transitionAudio.play();
@@ -102,7 +88,6 @@ const MatchCountdown: FC<Props> = ({ audio, mode = 'timeLeft' }) => {
   };
   const onAbort = () => {
     if (audio) abortAudio.play();
-    timer.abort();
   };
   const onEnd = () => {
     if (audio) endAudio.play();

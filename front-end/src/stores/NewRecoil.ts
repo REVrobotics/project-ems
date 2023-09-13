@@ -37,6 +37,7 @@ import {
 import { setApiStorage } from 'src/api/ApiProvider';
 import { AppFlags, defaultFlags } from './AppFlags';
 import { replaceAllInArray, replaceInArray } from './Util';
+import { timerTruthListener } from '../api/SocketProvider';
 
 const localStorageEffect: (key: string) => AtomEffect<any> =
   (key: string) =>
@@ -710,7 +711,7 @@ export const currentRankingsByMatchSelector = selector<Ranking[] | null>({
  * @section MATCH PLAYING STATE
  * Recoil state management for when matches are currently being played.
  */
-export const timer: MatchTimer = new MatchTimer();
+export const timer: MatchTimer = new MatchTimer(false, timerTruthListener);
 
 export const matchTimeAtom = atom({
   key: 'matchTimeAtom',
