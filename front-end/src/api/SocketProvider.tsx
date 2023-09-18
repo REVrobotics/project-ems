@@ -36,6 +36,9 @@ export const useSocket = (): [
 
   const initEvents = () => {
     if (socket) {
+      socket.io.on('reconnect_attempt', () => {
+        console.log('RECONNECTING');
+      });
       socket.on('connect', () => {
         setConnected(true);
         console.log('CONNECTED');

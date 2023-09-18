@@ -43,6 +43,8 @@ export enum MatchSocketEvent {
   COMMIT = "match:commit",
   DISPLAY = "match:display",
   UPDATE = "match:update",
+  SCORE_ITEM_UPDATE = "match:scoreItem",
+  // TODO(Noah): Consider adding an event for card updates
 
   PRESTART = "match:prestart",
   START = "match:start",
@@ -114,6 +116,12 @@ export const isMatch = (obj: unknown): obj is Match<any> =>
 
 export const isMatchArray = (obj: unknown): obj is Match<any>[] =>
   isArray(obj) && obj.every((o) => isMatch(o));
+
+export interface ScoreItemUpdate {
+  /** The name of the Match.details field to update */
+  detailsKey: string;
+  value: any;
+}
 
 export interface MatchParticipant {
   eventKey: string;

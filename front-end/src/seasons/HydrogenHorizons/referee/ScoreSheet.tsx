@@ -1,9 +1,14 @@
 import { FC, SyntheticEvent, useState } from 'react';
 import { RefereeScoreSheetProps } from '@seasons/index';
 import { useSocket } from 'src/api/SocketProvider';
-import { useRecoilValue } from 'recoil';
+import { SetterOrUpdater, useRecoilState } from 'recoil';
 import { matchInProgressAtom } from '@stores/NewRecoil';
-import { HydrogenHorizons, Match, MatchSocketEvent } from '@toa-lib/models';
+import {
+  HydrogenHorizons,
+  Match,
+  MatchSocketEvent,
+  ScoreItemUpdate
+} from '@toa-lib/models';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import { Typography } from '@mui/material';
@@ -18,7 +23,10 @@ import PenaltySheet from './PenaltySheet';
 
 const ScoreSheet: FC<RefereeScoreSheetProps> = ({ alliance }) => {
   const [socket] = useSocket();
-  const match = useRecoilValue(matchInProgressAtom);
+  const [match, setMatch]: [
+    Match<HydrogenHorizons.MatchDetails> | null,
+    SetterOrUpdater<Match<HydrogenHorizons.MatchDetails> | null>
+  ] = useRecoilState(matchInProgressAtom);
 
   const [tabIndex, setTabIndex] = useState(0);
 
@@ -34,6 +42,27 @@ const ScoreSheet: FC<RefereeScoreSheetProps> = ({ alliance }) => {
     newMatch: Match<HydrogenHorizons.MatchDetails>
   ) => {
     socket?.emit(MatchSocketEvent.UPDATE, newMatch);
+  };
+
+  const handleMatchDetailsUpdate = <
+    K extends keyof HydrogenHorizons.MatchDetails
+  >(
+    detailsKey: K,
+    value: HydrogenHorizons.MatchDetails[K]
+  ) => {
+    const update: ScoreItemUpdate = { detailsKey: detailsKey, value };
+    socket?.emit(MatchSocketEvent.SCORE_ITEM_UPDATE, update);
+
+    // Reduce UI latency by updating our local match state in anticipation
+    // of the update that the server wil send soon
+    if (match && match.details) {
+      const details = Object.assign(
+        {},
+        { ...match.details, [detailsKey]: value }
+      );
+      const newMatch = Object.assign({}, { ...match, details });
+      setMatch(newMatch);
+    }
   };
 
   return (
@@ -62,7 +91,7 @@ const ScoreSheet: FC<RefereeScoreSheetProps> = ({ alliance }) => {
           <TeleScoreSheet
             alliance={alliance}
             participants={participants}
-            onUpdate={handleMatchUpdate}
+            onMatchDetailsUpdate={handleMatchDetailsUpdate}
           />
         </TabPanel>
         <TabPanel value={tabIndex} index={1}>

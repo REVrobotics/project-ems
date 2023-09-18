@@ -7,6 +7,7 @@ import {
   MatchSocketEvent,
   MatchState,
   MatchTimer,
+  ScoreItemUpdate
 } from "@toa-lib/models";
 import { EventEmitter } from "node:events";
 import { Server, Socket } from "socket.io";
@@ -123,24 +124,15 @@ export default class Match extends Room {
       this.emitToAll(MatchSocketEvent.DISPLAY, id);
     });
     socket.on(MatchSocketEvent.UPDATE, (match: MatchObj<any>) => {
-      this.match = { ...match };
-      const seasonKey = getSeasonKeyFromEventKey(match.eventKey);
-      const functions = getFunctionsBySeasonKey(seasonKey);
-      if (
-        !match.details ||
-        !functions ||
-        this.state >= MatchState.RESULTS_COMMITTED
-      )
-        return;
-      const [redScore, blueScore] = functions.calculateScore(this.match);
-      this.match.redScore = redScore;
-      this.match.blueScore = blueScore;
-      if (functions.calculateRankingPoints) {
-        this.match.details = functions.calculateRankingPoints(
-          this.match.details
-        );
+      this.handlePartiallyUpdatedMatch(match);
+    });
+    socket.on(MatchSocketEvent.SCORE_ITEM_UPDATE, (itemUpdate: ScoreItemUpdate) => {
+      const matchDetails = this.match?.details;
+      if (matchDetails) {
+        matchDetails[itemUpdate.detailsKey] = itemUpdate.value;
+        this.handlePartiallyUpdatedMatch(this.match!);
+        console.log(this.match);
       }
-      this.emitToAll(MatchSocketEvent.UPDATE, this.match);
     });
     socket.on(MatchSocketEvent.COMMIT, (key: MatchKey) => {
       this.emitToAll(MatchSocketEvent.COMMIT, key);
@@ -150,6 +142,27 @@ export default class Match extends Room {
         `committing scores for ${key.eventKey}-${key.tournamentKey}-${key.id}`
       );
     });
+  }
+
+  private handlePartiallyUpdatedMatch(partiallyUpdatedMatch: MatchObj<any>): void {
+    this.match = { ...partiallyUpdatedMatch };
+    const seasonKey = getSeasonKeyFromEventKey(partiallyUpdatedMatch.eventKey);
+    const functions = getFunctionsBySeasonKey(seasonKey);
+    if (
+      !partiallyUpdatedMatch.details ||
+      !functions ||
+      this.state >= MatchState.RESULTS_COMMITTED
+    )
+      return;
+    const [redScore, blueScore] = functions.calculateScore(this.match);
+    this.match.redScore = redScore;
+    this.match.blueScore = blueScore;
+    if (functions.calculateRankingPoints) {
+      this.match.details = functions.calculateRankingPoints(
+        this.match.details
+      );
+    }
+    this.emitToAll(MatchSocketEvent.UPDATE, this.match);
   }
 
   private emitToAll(eventName: string, ...args: any[]): void {

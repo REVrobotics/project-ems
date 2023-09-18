@@ -8,7 +8,7 @@ import {
   MatchParticipant
 } from '@toa-lib/models';
 import StateToggle from '@components/Referee/StateToggle';
-import { SetterOrUpdater, useRecoilState } from 'recoil';
+import { useRecoilValue } from 'recoil';
 import { matchInProgressAtom } from '@stores/NewRecoil';
 import NumberInput from '@components/Referee/NumberInput';
 import {
@@ -20,54 +20,49 @@ import { useTeamIdentifiers } from 'src/hooks/use-team-identifier';
 interface Props {
   alliance: Alliance;
   participants: MatchParticipant[] | undefined;
-  onUpdate?: (match: Match<HydrogenHorizons.MatchDetails>) => void;
+  onMatchDetailsUpdate?: <K extends keyof HydrogenHorizons.MatchDetails>(
+    detailsKey: K,
+    value: HydrogenHorizons.MatchDetails[K]
+  ) => void;
 }
 
-const TeleScoreSheet: FC<Props> = ({ alliance, participants, onUpdate }) => {
-  const [match, setMatch]: [
-    Match<HydrogenHorizons.MatchDetails> | null,
-    SetterOrUpdater<Match<HydrogenHorizons.MatchDetails> | null>
-  ] = useRecoilState(matchInProgressAtom);
+const TeleScoreSheet: FC<Props> = ({
+  alliance,
+  participants,
+  onMatchDetailsUpdate
+}) => {
+  const match: Match<HydrogenHorizons.MatchDetails> | null =
+    useRecoilValue(matchInProgressAtom);
   const identifiers = useTeamIdentifiers();
 
   if (!match || !match.details) return null;
 
-  const setDetails = <K extends keyof HydrogenHorizons.MatchDetails>(
-    key: K,
-    value: HydrogenHorizons.MatchDetails[K]
-  ): Match<HydrogenHorizons.MatchDetails> => {
-    if (!match || !match.details) return match;
-    const details = Object.assign({}, { ...match.details, [key]: value });
-    const newMatch = Object.assign({}, { ...match, details });
-    onUpdate?.(newMatch);
-    return newMatch;
-  };
-
   const handleOxygenChange = (newValue: number) => {
-    setMatch(
-      setDetails(
+    // TODO(Noah): Re-introduce updating local match state to reduce UI latency
+    if (onMatchDetailsUpdate) {
+      onMatchDetailsUpdate(
         alliance === 'red' ? 'redOxygenPoints' : 'blueOxygenPoints',
         newValue
-      )
-    );
+      );
+    }
   };
 
   const handleHydrogenChange = (newValue: number) => {
-    setMatch(
-      setDetails(
+    if (onMatchDetailsUpdate) {
+      onMatchDetailsUpdate(
         alliance === 'red' ? 'redHydrogenPoints' : 'blueHydrogenPoints',
         newValue
-      )
-    );
+      );
+    }
   };
 
   const handleAlignmentUpdate = (newValue: AlignmentStatus) => {
-    setMatch(
-      setDetails(
+    if (onMatchDetailsUpdate) {
+      onMatchDetailsUpdate(
         alliance === 'red' ? 'redAlignment' : 'blueAlignment',
         newValue
-      )
-    );
+      );
+    }
   };
 
   const getProficiencyStatus = (station: number): Proficiency | undefined => {
@@ -90,24 +85,27 @@ const TeleScoreSheet: FC<Props> = ({ alliance, participants, onUpdate }) => {
   };
 
   const updateProficiency = (station: number, value: Proficiency) => {
+    if (!onMatchDetailsUpdate) {
+      return;
+    }
     switch (station) {
       case 11:
-        setMatch(setDetails('redOneProficiency', value));
+        onMatchDetailsUpdate('redOneProficiency', value);
         break;
       case 12:
-        setMatch(setDetails('redTwoProficiency', value));
+        onMatchDetailsUpdate('redTwoProficiency', value);
         break;
       case 13:
-        setMatch(setDetails('redThreeProficiency', value));
+        onMatchDetailsUpdate('redThreeProficiency', value);
         break;
       case 21:
-        setMatch(setDetails('blueOneProficiency', value));
+        onMatchDetailsUpdate('blueOneProficiency', value);
         break;
       case 22:
-        setMatch(setDetails('blueTwoProficiency', value));
+        onMatchDetailsUpdate('blueTwoProficiency', value);
         break;
       case 23:
-        setMatch(setDetails('blueThreeProficiency', value));
+        onMatchDetailsUpdate('blueThreeProficiency', value);
         break;
     }
   };
